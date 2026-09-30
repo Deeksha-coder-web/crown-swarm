@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crown Shyness Swarm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070a0f;--panel:#0d131b;--line:#1c2733;--ink:#e6edf3;--muted:#8b98a8;--teal:#2ee6c8;
+--moving:#7cc4ff;--settled:#ffd166;--bump:#ff5c7a;--mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(1200px 500px at 15% -10%,#0f2a2a55,transparent),radial-gradient(900px 500px at 100% 0,#1a1f4a44,transparent),var(--bg);
+color:var(--ink);font:14px/1.45 Inter,system-ui,sans-serif;min-height:100vh;padding:24px clamp(16px,3vw,40px) 40px}
+header{display:flex;gap:24px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px}
+.brand{display:flex;gap:14px;align-items:center}
+.brand svg{flex:none}
+h1{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.brand p{color:var(--muted);font-size:13px}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select,.seg button,.btn{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;
+font:500 13px Inter,sans-serif;padding:8px 12px;cursor:pointer;transition:.15s}
+select:hover,.seg button:hover,.btn:hover{border-color:#33475c}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:8px 11px;font-family:var(--mono)}
+.seg button.on{background:#1a2735;color:var(--teal)}
+#chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+#chips .hint{color:var(--muted);font-size:12px;margin-right:4px}
+.chip{display:flex;gap:8px;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:999px;
+padding:6px 13px 6px 10px;cursor:pointer;font-weight:500;font-size:13px;color:var(--muted);transition:.15s;user-select:none}
+.chip i{width:9px;height:9px;border-radius:50%;background:var(--c);opacity:.5}
+.chip.on{color:var(--ink);border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--panel));box-shadow:0 0 18px color-mix(in srgb,var(--c) 25%,transparent)}
+.chip.on i{opacity:1;box-shadow:0 0 8px var(--c)}
+#maps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:18px}
+.card{background:linear-gradient(180deg,#0f1620,#0a0f15);border:1px solid var(--line);border-radius:18px;padding:16px 16px 12px;
+box-shadow:0 20px 50px -20px #000c;position:relative}
+.card .head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;gap:12px}
+.card h2{font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card h2 i{width:10px;height:10px;border-radius:3px;background:var(--c);box-shadow:0 0 10px var(--c)}
+.card .sub{color:var(--muted);font-size:12px;margin-top:2px}
+.big{font:700 34px/1 var(--mono);color:var(--c);text-align:right;text-shadow:0 0 24px color-mix(in srgb,var(--c) 45%,transparent)}
+.big small{display:block;font:500 11px Inter,sans-serif;color:var(--muted);margin-top:4px;text-shadow:none}
+.stage{position:relative;border-radius:12px;overflow:hidden;border:1px solid #16202b}
+.stage canvas{display:block;width:100%}
+.toast{position:absolute;top:12px;left:50%;transform:translate(-50%,-8px);background:#ff5c7a22;border:1px solid #ff5c7a88;color:#ffd0d8;
+font-weight:600;font-size:13px;padding:6px 12px;border-radius:999px;opacity:0;transition:.25s;backdrop-filter:blur(6px);pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.foot{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.big small{white-space:nowrap}
+.stat{min-width:0;background:#0b1118;border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.stat b{display:block;font:700 15px var(--mono)}
+.stat span{color:var(--muted);font-size:11px}
+.panel{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px 16px}
+.transport{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+.play{width:42px;height:42px;border-radius:50%;border:0;background:var(--teal);color:#04201c;font-size:16px;cursor:pointer;
+box-shadow:0 0 22px #2ee6c866;flex:none;display:grid;place-items:center}
+.play:hover{filter:brightness(1.1)}
+#clock{font:500 13px var(--mono);color:var(--muted);min-width:130px;text-align:right}
+input[type=range]{flex:1;accent-color:var(--teal);height:4px}
+#chart{width:100%;height:190px;display:block;cursor:crosshair}
+.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:6px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
+.legend i.sq{border-radius:3px;box-shadow:none}
+.empty{padding:60px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:18px}
+.empty code{color:var(--teal);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+      <circle cx="14" cy="15" r="9" fill="#2ee6c8" opacity=".9"/><circle cx="31" cy="13" r="8" fill="#7cc4ff" opacity=".9"/>
+      <circle cx="22" cy="31" r="10" fill="#ffd166" opacity=".9"/></svg>
+    <div><h1>Crown Shyness Swarm</h1>
+      <p id="tagline">Robots spreading through a GPS-denied building: no positions, no radio, no leader.</p></div>
+  </div>
+  <div class="controls">
+    <select id="plan" aria-label="Scenario"></select>
+    <div class="seg" id="speed"></div>
+  </div>
+</header>
+<nav id="chips"></nav>
+<main id="maps"></main>
+<section class="panel">
+  <div class="transport">
+    <button class="play" id="play" aria-label="Play or pause">❚❚</button>
+    <input type="range" id="scrub" min="0" value="0" aria-label="Timeline">
+    <span id="clock">step 0</span>
+  </div>
+  <canvas id="chart"></canvas>
+  <div class="legend">
+    <span style="--c:var(--moving)"><i></i>moving</span>
+    <span style="--c:var(--settled)"><i></i>settled</span>
+    <span style="--c:var(--bump)"><i></i>bumping</span>
+    <span style="--c:#2ee6c8"><i class="sq"></i>seen now (2 m, line of sight)</span>
+    <span style="--c:#2ee6c855"><i class="sq"></i>seen earlier</span>
+    <span>space: play / pause · ← →: step</span>
+  </div>
+</section>
+<script src="data.js"></script>
+<script>
+const S = window.SIM, $ = s => document.querySelector(s);
+const STATE = ['#7cc4ff', '#ffd166', '#ff5c7a'];
+if (!S) {
+  $('#maps').innerHTML = '<div class="empty">No recorded runs yet. Run <code>./venv/bin/python export_web.py</code> and reload.</div>';
+  throw new Error('no data');
+}
+let plan = null, planName = Object.keys(S.plans)[0], sel = ['A', 'B'].filter(c => S.controllers[c]);
+if (!sel.length) sel = [Object.keys(S.controllers)[0]];
+let frame = 0, playing = true, speed = 1, acc = 0, last = 0, cards = [];
+const dpr = () => Math.min(2, window.devicePixelRatio || 1);
+
+function bits(b64, n) {
+  const s = atob(b64), o = new Uint8Array(n);
+  for (let i = 0; i < n; i++) o[i] = (s.charCodeAt(i >> 3) >> (7 - (i & 7))) & 1;
+  return o;
+}
+function prep(p) {  // decode once per plan
+  if (p._ready) return p;
+  p.wall = bits(p.walls, p.nx * p.ny);
+  p.cw = Math.ceil(p.w / p.cell); p.ch = Math.ceil(p.h / p.cell);
+  for (const r of Object.values(p.runs)) {
+    const n = p.cx.length; let ex = new Uint8Array(n);
+    r.cov_b = r.c.map(b => bits(b, n));
+    r.ex_b = r.cov_b.map(c => (ex = ex.map((v, i) => v | c[i])));
+    r.idx = r.id.map(ids => new Map(ids.map((id, j) => [id, j])));
+    r.fr = r.removed ? r.t.findIndex(t => t >= r.removed.t) : -1;
+  }
+  p._ready = true; return p;
+}
+const nFrames = () => Math.max(...sel.map(c => plan.runs[c].t.length));
+
+class Card {
+  constructor(c) {
+    this.c = c; this.run = plan.runs[c]; const m = S.controllers[c];
+    this.el = document.createElement('div'); this.el.className = 'card'; this.el.style.setProperty('--c', m.color);
+    this.el.innerHTML = `<div class="head"><div><h2><i></i>${m.title}</h2><div class="sub">senses: ${m.sub}</div></div>
+      <div class="big"><span>0%</span><small>floor seen now</small></div></div>
+      <div class="stage"><canvas></canvas><div class="toast"></div></div>
+      <div class="foot"><div class="stat"><b data-k="rob">-</b><span>robots active</span></div>
+      <div class="stat"><b data-k="col">-</b><span>collisions</span></div>
+      <div class="stat"><b data-k="ex">-</b><span>ever seen</span></div>
+      <div class="stat"><b data-k="gap">-</b><span>vs best placement</span></div></div>`;
+    this.cv = this.el.querySelector('canvas'); this.ctx = this.cv.getContext('2d');
+    this.big = this.el.querySelector('.big span'); this.toast = this.el.querySelector('.toast');
+    this.cov = document.createElement('canvas'); this.cov.width = plan.cw; this.cov.height = plan.ch;
+    this.img = this.cov.getContext('2d').createImageData(plan.cw, plan.ch);
+  }
+  resize() {
+    const w = this.cv.clientWidth * dpr(); if (!w) return;
+    this.cv.width = w; this.cv.height = w * plan.h / plan.w; this.k = w / plan.w;
+    const mk = () => { const c = document.createElement('canvas'); c.width = this.cv.width; c.height = this.cv.height; return c; };
+    // floor with a faint 1 m blueprint grid
+    this.floor = mk(); let g = this.floor.getContext('2d');
+    g.fillStyle = '#0c131b'; g.fillRect(0, 0, w, this.cv.height);
+    g.strokeStyle = '#ffffff0a'; g.lineWidth = 1;
+    for (let x = 1; x < plan.w; x++) { g.beginPath(); g.moveTo(x * this.k, 0); g.lineTo(x * this.k, this.cv.height); g.stroke(); }
+    for (let y = 1; y < plan.h; y++) { g.beginPath(); g.moveTo(0, y * this.k); g.lineTo(w, y * this.k); g.stroke(); }
+    // walls: row runs, soft teal glow
+    this.walls = mk(); g = this.walls.getContext('2d');
+    const cs = plan.cs * this.k; g.fillStyle = '#3b4b60'; g.shadowColor = '#2ee6c83a'; g.shadowBlur = 10 * dpr();
+    for (let r = 0; r < plan.ny; r++) {
+      let s = -1;
+      for (let c = 0; c <= plan.nx; c++) {
+        const on = c < plan.nx && plan.wall[r * plan.nx + c];
+        if (on && s < 0) s = c;
+        if (!on && s >= 0) { g.fillRect(s * cs, (plan.ny - 1 - r) * cs, (c - s) * cs + .5, cs + .5); s = -1; }
+      }
+    }
+  }
+  X(x) { return x * this.k } Y(y) { return (plan.h - y) * this.k }
+  draw(f) {
+    const r = this.run; f = Math.min(f, r.t.length - 1);
+    const g = this.ctx, k = this.k, R = 0.3 * k; if (!k) return;
+    // coverage heat: tiny image scaled up with smoothing = soft glow
+    const d = this.img.data, cov = r.cov_b[f], ex = r.ex_b[f]; d.fill(0);
+    for (let i = 0; i < cov.length; i++) {
+      if (!ex[i]) continue;
+      const o = ((plan.ch - 1 - plan.cy[i]) * plan.cw + plan.cx[i]) * 4;
+      d[o] = 46; d[o + 1] = 230; d[o + 2] = 200; d[o + 3] = cov[i] ? 120 : 30;
+    }
+    this.cov.getContext('2d').putImageData(this.img, 0, 0);
+    g.drawImage(this.floor, 0, 0);
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.filter = `blur(${5 * dpr()}px)`;
+    g.drawImage(this.cov, 0, 0, this.cv.width, this.cv.height);
+    g.filter = 'none';
+    g.drawImage(this.walls, 0, 0);
+    // entrance
+    const [ex0, ey0] = plan.entrance, pulse = (performance.now() / 900) % 1;
+    g.strokeStyle = `rgba(230,237,243,${0.6 * (1 - pulse)})`; g.lineWidth = 1.5 * dpr();
+    g.beginPath(); g.arc(this.X(ex0), this.Y(ey0), R * (1.5 + 2.5 * pulse), 0, 7); g.stroke();
+    g.fillStyle = '#e6edf3aa'; g.font = `600 ${9 * dpr()}px Inter`; g.textAlign = 'left';
+    g.fillText(planName === 'sky' ? 'LAUNCH PAD' : 'ENTRANCE', Math.max(4 * dpr(), this.X(ex0) - 24 * dpr()), this.Y(ey0) - R * 2.2);
+    // trails (last 12 frames, by robot id)
+    const P = r.p[f], ids = r.id[f]; g.lineCap = 'round'; g.lineWidth = 1.6 * dpr();
+    for (let j = 0; j < ids.length; j++) {
+      let px = P[2 * j], py = P[2 * j + 1];
+      for (let b = 1; b <= 12 && f - b >= 0; b++) {
+        const q = r.idx[f - b].get(ids[j]); if (q === undefined) break;
+        const qx = r.p[f - b][2 * q], qy = r.p[f - b][2 * q + 1];
+        if (Math.abs(qx - px) + Math.abs(qy - py) > 3) break;
+        g.strokeStyle = `rgba(124,196,255,${0.32 * (1 - b / 13)})`;
+        g.beginPath(); g.moveTo(this.X(px), this.Y(py)); g.lineTo(this.X(qx), this.Y(qy)); g.stroke();
+        px = qx; py = qy;
+      }
+    }
+    // failure: expanding rings where robots were lost
+    const lost = r.fr >= 0 && f >= r.fr && f < r.fr + 30;
+    if (lost) {
+      const a = (f - r.fr) / 30, L = r.removed.p;
+      g.strokeStyle = `rgba(255,92,122,${1 - a})`; g.lineWidth = 2 * dpr();
+      for (let i = 0; i < L.length; i += 2) {
+        g.beginPath(); g.arc(this.X(L[i]), this.Y(L[i + 1]), R * (1 + a * 5), 0, 7); g.stroke();
+      }
+    }
+    this.toast.textContent = r.removed ? `−${r.removed.p.length / 2} robots lost` : '';
+    this.toast.classList.toggle('show', lost && f < r.fr + 22);
+    // robots: glowing discs with a dark "eye" showing heading
+    const st = r.s[f], H = r.h[f];
+    for (let j = 0; j < ids.length; j++) {
+      const x = this.X(P[2 * j]), y = this.Y(P[2 * j + 1]), col = STATE[+st[j]];
+      g.shadowColor = col; g.shadowBlur = 12 * dpr(); g.fillStyle = col;
+      g.beginPath(); g.arc(x, y, R, 0, 7); g.fill(); g.shadowBlur = 0;
+      g.fillStyle = '#081018';
+      g.beginPath(); g.arc(x + Math.cos(H[j]) * R * .5, y - Math.sin(H[j]) * R * .5, R * .3, 0, 7); g.fill();
+    }
+    // numbers
+    const c = r.cov[f], n = ids.length;
+    this.big.textContent = Math.round(c * 100) + '%';
+    const set = (key, v) => this.el.querySelector(`[data-k=${key}]`).textContent = v;
+    set('rob', `${n}/${r.n0}`); set('col', r.k[f]);
+    set('ex', Math.round(ex.reduce((a, b) => a + b, 0) / ex.length * 100) + '%');
+    set('gap', Math.round(c / plan.ceiling * 100) + '%');
+  }
+}
+
+// ------------------------------------------------------------------ chart
+const chart = $('#chart'), cg = chart.getContext('2d');
+function drawChart(f) {
+  const w = chart.clientWidth * dpr(), h = chart.clientHeight * dpr(); chart.width = w; chart.height = h;
+  const L = 46 * dpr(), B = 24 * dpr(), T = 14 * dpr(), Rt = 70 * dpr(), fs = 11 * dpr();
+  const X = t => L + (w - L - Rt) * t / plan.steps, Y = v => T + (h - T - B) * (1 - v);
+  cg.font = `500 ${fs}px Inter`; cg.fillStyle = '#8b98a8'; cg.lineWidth = 1;
+  for (const v of [0, .25, .5, .75, 1]) {
+    cg.strokeStyle = '#1c2733'; cg.beginPath(); cg.moveTo(L, Y(v)); cg.lineTo(w - Rt, Y(v)); cg.stroke();
+    cg.textAlign = 'right'; cg.fillText(v * 100 + '%', L - 8 * dpr(), Y(v) + 4 * dpr());
+  }
+  cg.textAlign = 'center';
+  for (let t = 0; t <= plan.steps; t += 100) cg.fillText(t, X(t), h - 6 * dpr());
+  // ceiling + failure markers
+  cg.setLineDash([3 * dpr(), 4 * dpr()]); cg.strokeStyle = '#8b98a8';
+  cg.beginPath(); cg.moveTo(L, Y(plan.ceiling)); cg.lineTo(w - Rt, Y(plan.ceiling)); cg.stroke(); cg.setLineDash([]);
+  cg.textAlign = 'right'; cg.fillText('best static placement', w - Rt, Y(plan.ceiling) - 6 * dpr());
+  const rm = plan.runs[sel[0]].removed;
+  if (rm) {
+    cg.strokeStyle = '#ff5c7a88'; cg.beginPath(); cg.moveTo(X(rm.t), T); cg.lineTo(X(rm.t), h - B); cg.stroke();
+    cg.fillStyle = '#ff5c7a'; cg.textAlign = 'left'; cg.fillText(' robots removed', X(rm.t), Y(0.04));
+  }
+  for (const c of sel) {
+    const r = plan.runs[c], col = S.controllers[c].color, j = Math.min(f, r.t.length - 1);
+    const path = (to) => { cg.beginPath(); cg.moveTo(X(0), Y(r.cov[0])); for (let i = 0; i <= to; i++) cg.lineTo(X(r.t[i]), Y(r.cov[i])); };
+    cg.globalAlpha = .22; cg.strokeStyle = col; cg.lineWidth = 1.5 * dpr(); path(r.t.length - 1); cg.stroke(); cg.globalAlpha = 1;
+    const grad = cg.createLinearGradient(0, T, 0, h - B); grad.addColorStop(0, col + '40'); grad.addColorStop(1, col + '00');
+    path(j); cg.lineTo(X(r.t[j]), Y(0)); cg.lineTo(X(0), Y(0)); cg.fillStyle = grad; cg.fill();
+    path(j); cg.lineWidth = 2.5 * dpr(); cg.shadowColor = col; cg.shadowBlur = 10 * dpr(); cg.stroke(); cg.shadowBlur = 0;
+    cg.fillStyle = col; cg.beginPath(); cg.arc(X(r.t[j]), Y(r.cov[j]), 5 * dpr(), 0, 7); cg.fill();
+    cg.font = `700 ${fs}px 'JetBrains Mono'`; cg.textAlign = 'left';
+    cg.fillText(`${Math.round(r.cov[j] * 100)}% ${c}`, X(r.t[j]) + 9 * dpr(), Y(r.cov[j]) + 4 * dpr());
+    cg.font = `500 ${fs}px Inter`;
+  }
+  const t = plan.runs[sel[0]].t[Math.min(f, plan.runs[sel[0]].t.length - 1)];
+  cg.strokeStyle = '#e6edf355'; cg.beginPath(); cg.moveTo(X(t), T); cg.lineTo(X(t), h - B); cg.stroke();
+}
+function scrubFromChart(e) {
+  const r = chart.getBoundingClientRect(), L = 46, Rt = 70;
+  const t = (e.clientX - r.left - L) / (r.width - L - Rt) * plan.steps;
+  const ts = plan.runs[sel[0]].t; let i = ts.findIndex(x => x >= t); if (i < 0) i = ts.length - 1;
+  frame = Math.max(0, i); playing = false; render();
+}
+chart.addEventListener('pointerdown', e => { scrubFromChart(e); chart.onpointermove = scrubFromChart; });
+addEventListener('pointerup', () => chart.onpointermove = null);
+
+// ------------------------------------------------------------------ UI
+function load(name) {
+  const p = S.plans[name];
+  if (p.runs) return Promise.resolve();
+  return new Promise((ok, fail) => {
+    const sc = document.createElement('script'); sc.src = `data/${name}.js`;
+    sc.onload = () => { Object.assign(p, window.SIM_PLANS[name]); ok(); }; sc.onerror = fail;
+    document.head.appendChild(sc);
+  });
+}
+async function build() {
+  $('#maps').style.opacity = .35;
+  await load(planName);
+  $('#maps').style.opacity = 1;
+  plan = prep(S.plans[planName]);
+  $('#maps').innerHTML = ''; cards = sel.map(c => new Card(c));
+  cards.forEach(c => $('#maps').appendChild(c.el));
+  $('#chips').innerHTML = '<span class="hint">Controllers (pick up to 2):</span>' + Object.entries(S.controllers).map(([c, m]) =>
+    `<span class="chip ${sel.includes(c) ? 'on' : ''}" data-c="${c}" style="--c:${m.color}"><i></i>${m.title}</span>`).join('');
+  $('#scrub').max = nFrames() - 1;
+  const rm = plan.runs[sel[0]].removed;
+  $('#tagline').textContent = `${plan.label} · ${plan.agents} robots released at the start${rm ? ` · ${rm.p.length / 2} lost at step ${rm.t}` : ''}`;
+  requestAnimationFrame(() => { cards.forEach(c => c.resize()); render(); });
+}
+function render() {
+  frame = Math.min(frame, nFrames() - 1);
+  cards.forEach(c => c.draw(frame)); drawChart(frame);
+  $('#scrub').value = frame;
+  const t = plan.runs[sel[0]].t[Math.min(frame, plan.runs[sel[0]].t.length - 1)];
+  $('#clock').textContent = `step ${t} / ${plan.steps}`;
+  $('#play').textContent = playing ? '❚❚' : (frame >= nFrames() - 1 ? '↺' : '▶');
+}
+$('#plan').innerHTML = Object.entries(S.plans).map(([p, m]) => `<option value="${p}">${p} · ${m.label}</option>`).join('');
+$('#plan').onchange = e => { planName = e.target.value; frame = 0; build(); };
+$('#speed').innerHTML = [0.5, 1, 2, 4].map(s => `<button data-s="${s}" class="${s === 1 ? 'on' : ''}">${s}×</button>`).join('');
+$('#speed').onclick = e => { const b = e.target.closest('button'); if (!b) return; speed = +b.dataset.s;
+  $('#speed').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
+$('#chips').onclick = e => {
+  const ch = e.target.closest('.chip'); if (!ch) return; const c = ch.dataset.c;
+  if (sel.includes(c)) { if (sel.length > 1) sel = sel.filter(x => x !== c); }
+  else { sel.push(c); if (sel.length > 2) sel.shift(); }
+  build();
+};
+const toggle = () => { if (!playing && frame >= nFrames() - 1) frame = 0; playing = !playing; render(); };
+$('#play').onclick = toggle;
+$('#scrub').oninput = e => { frame = +e.target.value; playing = false; render(); };
+addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); toggle(); }
+  if (e.code === 'ArrowRight') { frame = Math.min(nFrames() - 1, frame + 1); playing = false; render(); }
+  if (e.code === 'ArrowLeft') { frame = Math.max(0, frame - 1); playing = false; render(); }
+});
+new ResizeObserver(() => { if (!plan) return; cards.forEach(c => c.resize()); render(); }).observe($('#maps'));
+function loop(ts) {
+  if (!plan) { last = ts; return requestAnimationFrame(loop); }
+  if (playing) {
+    acc += Math.min(0.1, (ts - last) / 1000) * 20 * speed;
+    while (acc >= 1) { frame++; acc--; }
+    if (frame >= nFrames() - 1) { frame = nFrames() - 1; playing = false; }
+    render();
+  } else cards.forEach(c => c.draw(frame));  // keep the entrance pulse alive
+  last = ts; requestAnimationFrame(loop);
+}
+build(); requestAnimationFrame(t => { last = t; loop(t); });
+</script>
+</body>
+</html>
